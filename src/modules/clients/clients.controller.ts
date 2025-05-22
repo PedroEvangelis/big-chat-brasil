@@ -17,6 +17,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { GetUser } from '../../common/decorators/user.decorator';
 import { Role } from '../../common/enums/Role.enum';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { LoggerService } from 'src/common/Logger/logger.service';
 
 /**
  * Controller responsável por lidar com as requisições relacionadas a clientes.
@@ -32,7 +33,13 @@ export class ClientsController {
    * Construtor do ClientsController.
    * @param clientsService O serviço de clientes injetado.
    */
-  constructor(private readonly clientsService: ClientsService) {}
+  constructor(
+    private readonly clientsService: ClientsService, 
+    private readonly logger: LoggerService
+    ) {
+      //Configuração de contexto
+      this.logger.setContext(ClientsController.name)
+    }
 
   /**
    * Retorna uma lista de todos os clientes.
@@ -41,8 +48,8 @@ export class ClientsController {
    * @returns Uma Promise que resolve para um array de objetos Client.
    */
   @Get()
-  @Roles(Role.ADMIN)
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @UseGuards(AuthGuard('jwt'))//, RolesGuard)
+  //@Roles([Role.ADMIN])
   @ApiOperation({ summary: 'Obtém todos os clientes (apenas para ADMINS)' })
   @ApiResponse({
     status: 200,
@@ -51,7 +58,17 @@ export class ClientsController {
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({ status: 403, description: 'Acesso proibido' })
-  async findAll(): Promise<Client[]> {
+  async findAll(
+    @GetUser() user: Client,
+  ): Promise<Client[]> {
+    this.logger.log('Excecutando busca de todos os clientes')
+
+    if (user.role !== Role.ADMIN){
+      this.logger.warn(`Cliente não autorizado: ${user.name}`)
+      throw new UnauthorizedException("Usuário não autorizado")
+    }
+
+    this.logger.warn(`Cliente autorizado: ${user.name}`)
     return this.clientsService.findAll();
   }
 
@@ -154,7 +171,6 @@ export class ClientsController {
     },
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({ status: 403, description: 'Acesso proibido a este recurso' })
   @ApiResponse({
     status: 404,
     description: 'ID de cliente inválido ou cliente não encontrado',

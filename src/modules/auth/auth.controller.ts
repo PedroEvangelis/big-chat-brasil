@@ -2,6 +2,7 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginRequestDto, LoginResponseDto } from './dto/login.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { LoggerService } from '../../common/Logger/logger.service';
 
 /**
  * Controller responsável pela autenticação de usuários.
@@ -17,7 +18,13 @@ export class AuthController {
    * Construtor do AuthController.
    * @param authService O serviço de autenticação injetado.
    */
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly logger: LoggerService
+  ) {
+    //Configuração de contexto
+    this.logger.setContext(AuthController.name)
+  }
 
   /**
    * Realiza o processo de login de um cliente.
@@ -38,6 +45,17 @@ export class AuthController {
     description: 'Cliente não encontrado ou inativo',
   })
   async login(@Body() loginDto: LoginRequestDto): Promise<LoginResponseDto> {
-    return await this.authService.login(loginDto);
+    this.logger.log(`Fazendo login: ${loginDto.documentType} ${loginDto.documentId}`)
+
+    try{
+      const response = await this.authService.login(loginDto);
+      
+      this.logger.log(`Cliente logado com sucesso: ${response.client.name}`);
+
+      return response;
+    }catch(error){
+      this.logger.log(`Falha ao realizar login: ${error.message}}`);
+      throw error;
+    }
   }
 }
