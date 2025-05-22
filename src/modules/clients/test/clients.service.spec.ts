@@ -33,7 +33,6 @@ describe('ClientsService', () => {
     documentId: '09876543211',
     documentType: Document.CPF,
     planType: Plan.POSTPAID,
-    active: true,
   };
 
   const mockUpdateClientDto: Partial<CreateClientDto> = {

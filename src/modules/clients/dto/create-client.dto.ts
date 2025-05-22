@@ -34,9 +34,4 @@ export class CreateClientDto {
   @IsNotEmpty()
   @IsString()
   planType: Plan;
-
-  @ApiProperty({ description: 'Atividade do cliente', example: false })
-  @IsNotEmpty()
-  @IsBoolean()
-  active: boolean; // Status do cliente
 }

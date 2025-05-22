@@ -118,7 +118,6 @@ describe('ClientsController', () => {
         documentId: '98765432100',
         documentType: Document.CPF,
         planType: Plan.POSTPAID,
-        active: true,
       };
       jest.spyOn(service, 'create').mockResolvedValue({
         ...mockClient,
