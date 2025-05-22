@@ -14,8 +14,8 @@ async function bootstrap() {
     .setTitle('Big Chat Brasil')
     .setDescription('API de mensagens')
     .setVersion('0.1')
-    .addTag('Auth', 'Autenticação')
-    .addTag('Clients', 'Clientes')
+    .addTag('auth', 'Autenticação')
+    .addTag('clients', 'Clientes')
     .addBearerAuth()
     .build();
 
