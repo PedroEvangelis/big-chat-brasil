@@ -1,7 +1,11 @@
-import { Injectable, LoggerService as NestLoggerService, Scope } from '@nestjs/common';
+import {
+  Injectable,
+  LoggerService as NestLoggerService,
+  Scope,
+} from '@nestjs/common';
 import * as winston from 'winston';
 
-@Injectable() // Um novo LoggerService é instanciado por consumidor para logs de contexto
+@Injectable()
 export class LoggerService implements NestLoggerService {
   private readonly logger: winston.Logger;
   private context?: string;
@@ -13,20 +17,20 @@ export class LoggerService implements NestLoggerService {
         winston.format.timestamp({
           format: 'YYYY-MM-DD HH:mm:ss',
         }),
-        winston.format.errors({ stack: true }), 
-        winston.format.json() 
+        winston.format.errors({ stack: true }),
+        winston.format.json(),
       ),
       transports: [
         new winston.transports.Console({
           format: winston.format.combine(
             winston.format.colorize(),
-            winston.format.printf(info => {
+            winston.format.printf((info) => {
               // Adiciona o contexto para logs no console
               return `${info.timestamp} [${info.level.toUpperCase()}]${this.context ? ` [${this.context}]` : ''}: ${info.message}${info.stack ? `\n${info.stack}` : ''}`;
-            })
-          )
+            }),
+          ),
         }),
-        
+
         // new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
         // new winston.transports.File({ filename: 'logs/combined.log' }),
       ],
@@ -49,11 +53,11 @@ export class LoggerService implements NestLoggerService {
     this.logger.warn(message, { context: context || this.context });
   }
 
-  debug(message: any, context?: string) {
-    this.logger.debug(message, { context: context || this.context });
-  }
+  // debug(message: any, context?: string) {
+  //   this.logger.debug(message, { context: context || this.context });
+  // }
 
-  verbose(message: any, context?: string) {
-    this.logger.verbose(message, { context: context || this.context });
-  }
+  // verbose(message: any, context?: string) {
+  //   this.logger.verbose(message, { context: context || this.context });
+  // }
 }

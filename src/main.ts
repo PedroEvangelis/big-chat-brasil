@@ -2,17 +2,16 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { LoggerService } from './common/Logger/logger.service';
+import { LoggerService } from './common/logger/logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(
-    AppModule, {
-      bufferLogs: true,
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true,
   });
 
   const customLogger = app.get(LoggerService);
   app.useLogger(customLogger);
-  
+
   app.useGlobalPipes(new ValidationPipe());
 
   const config = new DocumentBuilder()
@@ -21,11 +20,14 @@ async function bootstrap() {
     .setVersion('0.1')
     .addTag('auth', 'Autenticação')
     .addTag('clients', 'Clientes')
+    .addTag('conversations', 'Conversas')
+    .addTag('messages', 'Mensagens')
+    .addTag('queue', 'Fila')
     .addBearerAuth()
     .build();
 
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('docs', app, document); // acessível em /docs
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document); // acessível em /docs
 
   await app.listen(3000);
 }

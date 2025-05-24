@@ -8,16 +8,21 @@ import {
   Put,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ClientsService } from './clients.service';
 import { CreateClientDto } from './dto/create-client.dto';
 import { Client } from './entities/client.entity';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtGuard } from '../auth/guards/jwt.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { GetUser } from '../../common/decorators/user.decorator';
 import { Role } from '../../common/enums/Role.enum';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { LoggerService } from 'src/common/Logger/logger.service';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { LoggerService } from '../../common/logger/logger.service';
 
 /**
  * Controller responsável por lidar com as requisições relacionadas a clientes.
@@ -34,12 +39,12 @@ export class ClientsController {
    * @param clientsService O serviço de clientes injetado.
    */
   constructor(
-    private readonly clientsService: ClientsService, 
-    private readonly logger: LoggerService
-    ) {
-      //Configuração de contexto
-      this.logger.setContext(ClientsController.name)
-    }
+    private readonly clientsService: ClientsService,
+    private readonly logger: LoggerService,
+  ) {
+    //Configuração de contexto
+    this.logger.setContext(ClientsController.name);
+  }
 
   /**
    * Retorna uma lista de todos os clientes.
@@ -48,8 +53,9 @@ export class ClientsController {
    * @returns Uma Promise que resolve para um array de objetos Client.
    */
   @Get()
-  @UseGuards(AuthGuard('jwt'))//, RolesGuard)
-  //@Roles([Role.ADMIN])
+  @UseGuards(JwtGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Obtém todos os clientes (apenas para ADMINS)' })
   @ApiResponse({
     status: 200,
@@ -58,17 +64,8 @@ export class ClientsController {
   })
   @ApiResponse({ status: 401, description: 'Não autorizado' })
   @ApiResponse({ status: 403, description: 'Acesso proibido' })
-  async findAll(
-    @GetUser() user: Client,
-  ): Promise<Client[]> {
-    this.logger.log('Excecutando busca de todos os clientes')
-
-    if (user.role !== Role.ADMIN){
-      this.logger.warn(`Cliente não autorizado: ${user.name}`)
-      throw new UnauthorizedException("Usuário não autorizado")
-    }
-
-    this.logger.warn(`Cliente autorizado: ${user.name}`)
+  async findAll(@GetUser() user: Client): Promise<Client[]> {
+    this.logger.log('Excecutando busca de todos os clientes');
     return this.clientsService.findAll();
   }
 
@@ -126,7 +123,8 @@ export class ClientsController {
    * @throws UnauthorizedException Se o usuário tentar atualizar um perfil que não é o seu.
    */
   @Put(':id')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Atualiza os dados de um cliente' })
   @ApiResponse({
     status: 200,
@@ -139,7 +137,7 @@ export class ClientsController {
   async update(
     @GetUser() user: Client, // Usuário autenticado
     @Param('id') id: string,
-    @Body() updateClientDto: Partial<CreateClientDto>,
+    @Body() updateClientDto: CreateClientDto,
   ): Promise<Client> {
     if (user.id !== id) {
       throw new UnauthorizedException('Acesso não autorizado a este recurso.');
@@ -157,7 +155,8 @@ export class ClientsController {
    * @throws UnauthorizedException Se o usuário tentar acessar o saldo de outro cliente.
    */
   @Get(':id/balance')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JwtGuard)
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Obtém o saldo e limite de um cliente' })
   @ApiResponse({
     status: 200,

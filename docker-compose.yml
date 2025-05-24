@@ -5,13 +5,16 @@ services:
       - "3000:3000"
     depends_on:
       - postgres
+      - redis # Adicionamos a dependência do Redis aqui
     volumes:
       - .:/app
-      - /app/node_modules
+      - /app/node_modules # Garante que node_modules seja um volume separado para não sobrescrever
     env_file:
       - .env
     environment:
-      POSTGRES_HOST: postgres # Sobrescreve para apontar para o container 'postgres'
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis # Define o host Redis para o nome do serviço Docker
+      REDIS_PORT: 6379  # A porta padrão do Redis
     command: npm run start:dev
     networks:
       - backend
@@ -31,8 +34,20 @@ services:
     networks:
       - backend
 
+  redis: # Novo serviço Redis
+    image: redis:7-alpine
+    container_name: my-redis-instance # Nome do container Docker
+    ports:
+      - "6379:6379" # Mapeia a porta 6379 do host para a 6379 do container
+    command: redis-server --appendonly yes # Inicia o Redis com persistência AOF
+    volumes:
+      - redis_data:/data # Volume para persistir os dados do Redis
+    networks:
+      - backend # Adiciona o Redis à mesma rede do app e postgres
+
 volumes:
   pgdata:
+  redis_data: # Define o volume nomeado para o Redis
 
 networks:
   backend:
