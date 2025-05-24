@@ -26,6 +26,7 @@ describe('ClientsService', () => {
     role: Role.USER,
     createDateTime: new Date(),
     lastChangedDateTime: new Date(),
+    debit: jest.fn(),
   };
 
   const mockCreateClientDto: CreateClientDto = {

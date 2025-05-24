@@ -1,7 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
-import { AuthGuard } from '@nestjs/passport';
 import { Repository } from 'typeorm';
 import { ClientsController } from '../clients.controller';
 import { ClientsService } from '../clients.service';
@@ -11,6 +10,8 @@ import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Role } from '../../../common/enums/Role.enum';
 import { Document } from '../../../common/enums/Document.enum';
 import { Plan } from '../../../common/enums/Plan.enum';
+import { JwtGuard } from '../../auth/guards/jwt.guard';
+import { LoggerService } from '../../../common/logger/logger.service';
 
 // Mock para o AuthGuard
 const mockAuthGuard = {
@@ -40,6 +41,7 @@ describe('ClientsController', () => {
     createDateTime: new Date(),
     lastChangedDateTime: new Date(),
     active: true,
+    debit: jest.fn,
   };
 
   // Mock de um administrador para usar nos testes
@@ -47,6 +49,7 @@ describe('ClientsController', () => {
     ...mockClient,
     id: 'adminClientId',
     role: Role.ADMIN,
+    debit: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -63,7 +66,7 @@ describe('ClientsController', () => {
           },
         },
         {
-          provide: AuthGuard('jwt'),
+          provide: JwtGuard,
           useValue: mockAuthGuard,
         },
         {
@@ -74,9 +77,17 @@ describe('ClientsController', () => {
           provide: getRepositoryToken(Client),
           useClass: Repository,
         },
+        {
+          provide: LoggerService,
+          useValue: {
+            log: jest.fn(),
+            warn: jest.fn(),
+            setContext: jest.fn(),
+          },
+        },
       ],
     })
-      .overrideProvider(AuthGuard('jwt'))
+      .overrideProvider(JwtGuard)
       .useValue(mockAuthGuard)
       .overrideProvider(RolesGuard)
       .useValue(mockRolesGuard)
@@ -105,7 +116,7 @@ describe('ClientsController', () => {
       mockAuthGuard.canActivate.mockReturnValue(true);
       mockRolesGuard.canActivate.mockReturnValue(true);
 
-      const result = await controller.findAll();
+      const result = await controller.findAll(mockAdminClient);
       expect(result).toEqual([mockClient]);
       expect(service.findAll).toHaveBeenCalled();
     });
@@ -123,6 +134,7 @@ describe('ClientsController', () => {
         ...mockClient,
         ...createClientDto,
         id: 'newClientId',
+        debit: jest.fn,
       });
 
       const result = await controller.create(createClientDto);
@@ -143,12 +155,14 @@ describe('ClientsController', () => {
 
   describe('update', () => {
     it('Deve fazer update no usuário caso ele seja o mesmo autenticado', async () => {
-      const updateClientDto: Partial<CreateClientDto> = {
+      const updateClientDto: CreateClientDto = {
+        ...mockClient,
         name: 'Updated Client Name',
       };
       jest.spyOn(service, 'update').mockResolvedValue({
         ...mockClient,
         ...updateClientDto,
+        debit: jest.fn,
       });
 
       const result = await controller.update(
@@ -167,8 +181,13 @@ describe('ClientsController', () => {
     });
 
     it('Deve lançar UnauthorizedException se o cliente autenticado não for o que está atualizando', async () => {
-      const anotherClient: Client = { ...mockClient, id: 'anotherClientId' };
-      const updateClientDto: Partial<CreateClientDto> = {
+      const anotherClient: Client = {
+        ...mockClient,
+        id: 'anotherClientId',
+        debit: jest.fn,
+      };
+      const updateClientDto: CreateClientDto = {
+        ...mockClient,
         name: 'Updated Client Name',
       };
 
@@ -197,7 +216,11 @@ describe('ClientsController', () => {
     });
 
     it('Deve lançar UnauthorizedException se o usuário autenticado não for o que está na sessão', async () => {
-      const anotherClient: Client = { ...mockClient, id: 'anotherClientId' };
+      const anotherClient: Client = {
+        ...mockClient,
+        id: 'anotherClientId',
+        debit: jest.fn(),
+      };
 
       await expect(
         controller.getBalance(mockClient.id, anotherClient),

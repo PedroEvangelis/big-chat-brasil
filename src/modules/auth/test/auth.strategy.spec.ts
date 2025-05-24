@@ -7,6 +7,7 @@ import { Client } from '../../clients/entities/client.entity';
 import { Role } from '../../../common/enums/Role.enum';
 import { Document } from '../../../common/enums/Document.enum';
 import { Plan } from '../../../common/enums/Plan.enum';
+import { LoggerService } from '../../../common/logger/logger.service';
 
 describe('JwtStrategy', () => {
   let strategy: JwtStrategy;
@@ -25,17 +26,25 @@ describe('JwtStrategy', () => {
     createDateTime: new Date(),
     lastChangedDateTime: new Date(),
     active: true,
+    debit: jest.fn(),
   };
 
   const mockInactiveClient: Client = {
     ...mockClient,
     id: 'inactiveClientId',
     active: false,
+    debit: jest.fn(),
   };
 
   // Mock do repositório de clientes
   const mockClientRepository = {
     findOne: jest.fn(),
+  };
+
+  const mockLoggerService = {
+    log: jest.fn(),
+    warn: jest.fn(),
+    setContext: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -48,6 +57,10 @@ describe('JwtStrategy', () => {
         {
           provide: getRepositoryToken(Client),
           useValue: mockClientRepository,
+        },
+        {
+          provide: LoggerService,
+          useValue: mockLoggerService,
         },
       ],
     }).compile();

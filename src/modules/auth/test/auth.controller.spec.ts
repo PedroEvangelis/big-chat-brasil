@@ -4,6 +4,7 @@ import { AuthService } from '../auth.service';
 import { LoginRequestDto, LoginResponseDto } from '../dto/login.dto';
 import { Plan } from '../../../common/enums/Plan.enum';
 import { Document } from '../../../common/enums/Document.enum';
+import { LoggerService } from '../../../common/logger/logger.service';
 
 describe('AuthController', () => {
   let authController: AuthController;
@@ -11,6 +12,12 @@ describe('AuthController', () => {
 
   const mockAuthService = {
     login: jest.fn(),
+  };
+
+  const mockLoggerService = {
+    log: jest.fn(),
+    warn: jest.fn(),
+    setContext: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -23,6 +30,10 @@ describe('AuthController', () => {
         {
           provide: AuthService,
           useValue: mockAuthService, // Mocka a implementação
+        },
+        {
+          provide: LoggerService,
+          useValue: mockLoggerService,
         },
       ],
     }).compile();
