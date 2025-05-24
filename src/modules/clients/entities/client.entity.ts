@@ -33,7 +33,7 @@ export class Client extends BaseEntity {
     type: 'decimal',
     precision: 10,
     scale: 2,
-    default: 0,
+    default: 10,
     nullable: true,
   })
   balance: number; // Saldo (para pré-pago)
@@ -43,7 +43,7 @@ export class Client extends BaseEntity {
     type: 'decimal',
     precision: 10,
     scale: 2,
-    default: 0,
+    default: 10,
     nullable: true,
   })
   limit: number; // Limite (para pós-pago)
