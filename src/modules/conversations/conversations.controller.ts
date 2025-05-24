@@ -136,7 +136,7 @@ export class ConversationsController {
 
       if (
         clientId !== conversation.clientId
-        || clientId !== conversation.recipientId
+        && clientId !== conversation.recipientId
       ) {
         this.logger.warn(
           `Tentativa de acesso não autorizado à conversa ID: ${id} pelo cliente ID: ${clientId}.`,
@@ -223,7 +223,7 @@ export class ConversationsController {
 
       if (
         clientId !== conversation.clientId
-        || clientId !== conversation.recipientId
+        && clientId !== conversation.recipientId
       ) {
         this.logger.warn(
           `Tentativa de acesso não autorizado às mensagens da conversa ID: ${id} pelo cliente ID: ${clientId}.`,
